@@ -1,0 +1,31 @@
+﻿@using ChatDrugiPut.Shared
+
+<h3>LogIn</h3>
+
+<p>Test: @zaLog.Username</p>
+<EditForm Model="@zaLog" OnSubmit="Submit">
+	<p>Username: <InputText @bind-Value="zaLog.Username"/></p>
+	<p>Password: <InputText @bind-Value="zaLog.Password"/></p>
+	<button type="submit">Log in</button>
+</EditForm>
+
+
+@code 
+{
+	public User zaLog { get; set; } = new User();
+
+	[Parameter]
+	public EventCallback<User> KodPodKomponente { get; set; }
+
+	[Parameter]
+	public List<User> sviJuzeri { get; set; }
+
+	public void Submit()
+	{
+		User log = sviJuzeri.Where(j => j.Username == zaLog.Username && j.Password == zaLog.Password).FirstOrDefault();
+		if (log != null)
+		{
+			KodPodKomponente.InvokeAsync(log);
+		}
+	}
+}

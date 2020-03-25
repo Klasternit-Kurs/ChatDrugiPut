@@ -1,0 +1,25 @@
+﻿@using ChatDrugiPut.Shared
+<h3>Registracija</h3>
+
+<EditForm Model="@Kor" OnValidSubmit="OK">
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+	<p>Username: <InputText @bind-Value="Kor.Username" /></p>
+	<p>Password: <InputText @bind-Value="Kor.Password" /></p>
+	<button type="submit">Registruj korisnika</button>
+</EditForm>
+
+
+@code 
+{
+	public User Kor = new User();
+
+	[Parameter]
+	public EventCallback<User> Dodavanje {get;set; }
+
+	public void OK()
+	{
+		Dodavanje.InvokeAsync(Kor);
+	}
+
+}

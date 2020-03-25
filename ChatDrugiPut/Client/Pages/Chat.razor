@@ -1,0 +1,52 @@
+﻿@page "/chat"
+@using ChatDrugiPut.Shared
+
+@if (Juzer == null)
+{
+	@if(txtDugme == "Registruj se!")
+	{ 
+		<LogIn KodPodKomponente="EventHandlerKodRoditelja" sviJuzeri=@Korisnici />
+	} else
+	{
+		<Registracija Dodavanje="DodajJuzera"/>
+	}
+	<button @onclick="Toggle">@txtDugme</button>
+}
+else
+{
+	<ChatProzor UlogovanKorisnik=@Juzer/>
+}
+
+
+
+@code 
+{
+	public User Juzer { get; set; }
+	public bool Test { get; set; }
+	public string txtDugme { get; set; } = "Registruj se!";
+
+	public List<User> Korisnici { get; set; } = new List<User>();
+
+	public void Toggle()
+	{
+		if (txtDugme == "Registruj se!")
+		{
+			txtDugme = "Uloguj se!";
+		} else
+		{
+			txtDugme = "Registruj se!";
+		}
+	}
+
+	public void DodajJuzera(User novi)
+	{
+		Korisnici.Add(novi);
+		txtDugme = "Registruj se!";
+	}
+
+	public void EventHandlerKodRoditelja(User nesto)
+	{
+		Juzer = nesto;
+	}
+
+}
