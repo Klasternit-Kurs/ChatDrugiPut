@@ -9,12 +9,13 @@ namespace ChatDrugiPut.Server.SignalR
 {
 	public class ChatHub : Hub
 	{
-		public async Task PrimiPoruku(string p)
+
+		public async Task PrimiPoruku(Poruka por)
 		{
-			var poruka = p.Split(':')[1];
-			await Clients.Caller.SendAsync("PorukaKaKlijentu", $"Ja: {poruka}");
-			await Clients.Others.SendAsync("PorukaKaKlijentu", p);
-		
+			Console.WriteLine("U metodi :) ");
+			Console.WriteLine($"{por.Posiljaoc.Username}: {por.Sadrzaj}");
+			await Clients.Caller.SendAsync("PorukaKaKlijentu", por);
+			await Clients.Others.SendAsync("PorukaKaKlijentu", por);
 		}
 
 		public async Task PrihvatiKorisnika (User u)

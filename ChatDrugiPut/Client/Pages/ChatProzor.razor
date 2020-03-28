@@ -4,12 +4,19 @@
 <h3>ChatProzor</h3>
 <p>Ulogovan korisnik: @UlogovanKorisnik.Username</p>
 
-<p><input @bind-value="Poruka" /> <button @onclick="Posalji">Posalji</button></p>
+<p><input @bind-value="Tekst" /> <button @onclick="Posalji">Posalji</button></p>
 
 
-@foreach(string poruka in Istorija)
+@foreach (Poruka poruka in Istorija)
 {
-	<p>@poruka</p>
+	<p>Ovde su kao poruke</p>
+	@if (poruka.Posiljaoc.Equals(UlogovanKorisnik))
+	{
+		<p>Ja: @poruka.Sadrzaj</p>
+	} else
+	{
+		<p>@poruka.Posiljaoc.Username: @poruka.Sadrzaj</p>
+	}
 }
 
 @code 
@@ -20,13 +27,13 @@
 	[Parameter]
 	public HubConnection cHub { get; set; }
 
-	public string Poruka { get; set; }
+	public string Tekst { get; set; }
 
-	List<string> Istorija = new List<string>();
+	List<Poruka> Istorija = new List<Poruka>();
 
 	protected override async Task OnInitializedAsync()
 	{
-		cHub.On<string>("PorukaKaKlijentu", p =>
+		cHub.On<Poruka>("PorukaKaKlijentu", p =>
 		{
 			Istorija.Add(p);
 			StateHasChanged();
@@ -36,8 +43,9 @@
 
 	public async Task Posalji()
 	{
-		await cHub.SendAsync("PrimiPoruku", $"{UlogovanKorisnik.Username}: {Poruka}");
-		Poruka = "";
+		Poruka p = new Poruka(Tekst, UlogovanKorisnik);
+		await cHub.SendAsync("PrimiPoruku", p);
+		Tekst = "";
 	}
 
 }
