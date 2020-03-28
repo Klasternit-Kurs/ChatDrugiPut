@@ -1,11 +1,43 @@
 ﻿@using ChatDrugiPut.Shared
+@using Microsoft.AspNetCore.SignalR.Client
 
 <h3>ChatProzor</h3>
 <p>Ulogovan korisnik: @UlogovanKorisnik.Username</p>
+
+<p><input @bind-value="Poruka" /> <button @onclick="Posalji">Posalji</button></p>
+
+
+@foreach(string poruka in Istorija)
+{
+	<p>@poruka</p>
+}
 
 @code 
 {
 	[Parameter]
 	public User UlogovanKorisnik { get; set; }
+
+	[Parameter]
+	public HubConnection cHub { get; set; }
+
+	public string Poruka { get; set; }
+
+	List<string> Istorija = new List<string>();
+
+	protected override async Task OnInitializedAsync()
+	{
+		cHub.On<string>("PorukaKaKlijentu", p =>
+		{
+			Istorija.Add(p);
+			StateHasChanged();
+		});
+
+	}
+
+	public async Task Posalji()
+	{
+		await cHub.SendAsync("PrimiPoruku", $"{UlogovanKorisnik.Username}: {Poruka}");
+		Poruka = "";
+	}
 
 }

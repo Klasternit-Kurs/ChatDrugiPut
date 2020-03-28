@@ -16,5 +16,17 @@ namespace ChatDrugiPut.Shared
 		[StringLength(50, MinimumLength = 5, ErrorMessage = "Check length (password:D)!")]
 		public string Password { get; set; }
 		public bool LoggedIn { get; set; }
+
+		public override bool Equals(object obj)
+		{
+			if (obj is User u && u.Username == this.Username && u.Password == this.Password)
+				return true;
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return this.Username.GetHashCode();
+		}
 	}
 }

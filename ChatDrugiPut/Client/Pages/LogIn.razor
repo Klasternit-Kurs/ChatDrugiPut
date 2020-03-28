@@ -1,4 +1,5 @@
 ﻿@using ChatDrugiPut.Shared
+@using Microsoft.AspNetCore.SignalR.Client
 
 <h3>LogIn</h3>
 
@@ -15,17 +16,15 @@
 	public User zaLog { get; set; } = new User();
 
 	[Parameter]
-	public EventCallback<User> KodPodKomponente { get; set; }
+	public HubConnection KaServeruLogin { get; set; }
 
 	[Parameter]
-	public List<User> sviJuzeri { get; set; }
+	public EventCallback<User> KodPodKomponente { get; set; }
 
 	public void Submit()
 	{
-		User log = sviJuzeri.Where(j => j.Username == zaLog.Username && j.Password == zaLog.Password).FirstOrDefault();
-		if (log != null)
-		{
-			KodPodKomponente.InvokeAsync(log);
-		}
+		KaServeruLogin.On<User>("EvoDobrog", u => KodPodKomponente.InvokeAsync(u));
+		KaServeruLogin.SendAsync("ProveriKorisnika", zaLog);
+		
 	}
 }

@@ -1,3 +1,4 @@
+using ChatDrugiPut.Server.SignalR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -13,6 +14,10 @@ namespace ChatDrugiPut.Server
 		public Startup(IConfiguration configuration)
 		{
 			Configuration = configuration;
+			using(var sql = new EF.Baza())
+			{
+				sql.Database.EnsureCreated();
+			}
 		}
 
 		public IConfiguration Configuration { get; }
@@ -23,6 +28,7 @@ namespace ChatDrugiPut.Server
 		{
 
 			services.AddControllersWithViews();
+			services.AddSignalR();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,6 +52,7 @@ namespace ChatDrugiPut.Server
 			app.UseEndpoints(endpoints =>
 			{
 				endpoints.MapControllers();
+				endpoints.MapHub<ChatHub>("ch");
 				endpoints.MapFallbackToFile("index.html");
 			});
 		}

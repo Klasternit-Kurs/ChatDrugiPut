@@ -1,31 +1,39 @@
 ﻿@page "/chat"
 @using ChatDrugiPut.Shared
-
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Nav
+	
 @if (Juzer == null)
 {
-	@if(txtDugme == "Registruj se!")
-	{ 
-		<LogIn KodPodKomponente="EventHandlerKodRoditelja" sviJuzeri=@Korisnici />
-	} else
+	@if (txtDugme == "Registruj se!")
 	{
-		<Registracija Dodavanje="DodajJuzera"/>
+		<LogIn KodPodKomponente="EventHandlerKodRoditelja" KaServeruLogin=@KaServeru />
+	}
+	else
+	{
+		<Registracija Dodavanje="DodajJuzera" />
 	}
 	<button @onclick="Toggle">@txtDugme</button>
 }
 else
 {
-	<ChatProzor UlogovanKorisnik=@Juzer/>
+	<ChatProzor UlogovanKorisnik=@Juzer cHub=@KaServeru />
 }
+	
 
 
 
 @code 
 {
 	public User Juzer { get; set; }
-	public bool Test { get; set; }
 	public string txtDugme { get; set; } = "Registruj se!";
+	public HubConnection KaServeru;
 
-	public List<User> Korisnici { get; set; } = new List<User>();
+	protected override async Task OnInitializedAsync()
+	{
+		KaServeru = new HubConnectionBuilder().WithUrl(Nav.ToAbsoluteUri("/ch")).Build();
+		await KaServeru.StartAsync();
+	}
 
 	public void Toggle()
 	{
@@ -40,7 +48,8 @@ else
 
 	public void DodajJuzera(User novi)
 	{
-		Korisnici.Add(novi);
+		KaServeru.SendAsync("PrihvatiKorisnika", novi);
+		
 		txtDugme = "Registruj se!";
 	}
 
