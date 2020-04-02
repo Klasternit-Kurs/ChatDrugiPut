@@ -2,13 +2,13 @@
 @using Microsoft.AspNetCore.SignalR.Client
 
 	<div class="fleks">
-		<div>1</div>
-		<div>2</div>
-		<div>3</div>
-	</div>
-	<div class="fleks">
 		<div>
-			<p>Ovde ce da budu grupe</p>
+			<ul>
+				@if(UlogovanKorisnik.AktivneGrupe == null)
+				{
+					<li>NUUUUUUULLLLL</li>
+				}
+			</ul>
 		</div>
 		<div>
 			<h3>ChatProzor</h3>
@@ -73,7 +73,7 @@
 			} else
 			{
 				p.Grupa = p.Sadrzaj.Split(' ')[0].Remove(0, 1);
-				p.Sadrzaj = p.Sadrzaj.Split(' ')[1];
+				p.Sadrzaj = p.Sadrzaj.Remove(0,p.Sadrzaj.Split(' ')[0].Length + 1);
 				await cHub.SendAsync("PrimiPoruku", p);
 			}
 

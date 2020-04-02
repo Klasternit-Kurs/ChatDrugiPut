@@ -16,6 +16,7 @@ namespace ChatDrugiPut.Server
 			Configuration = configuration;
 			using(var sql = new EF.Baza())
 			{
+				//sql.Database.EnsureDeleted();
 				sql.Database.EnsureCreated();
 			}
 		}

@@ -15,7 +15,9 @@ namespace ChatDrugiPut.Shared
 		[Required]
 		[StringLength(50, MinimumLength = 5, ErrorMessage = "Check length (password:D)!")]
 		public string Password { get; set; }
-		public bool LoggedIn { get; set; }
+
+		public ICollection<UserGrupa> AktivneGrupe { get; set; }
+
 
 		public override bool Equals(object obj)
 		{
