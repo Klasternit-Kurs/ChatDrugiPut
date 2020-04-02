@@ -8,11 +8,13 @@ namespace ChatDrugiPut.Shared
 	{
 		public string Sadrzaj { get; set; } 
 		public User Posiljaoc { get; set; } 
+		public string Grupa { get; set; }
 		
-		public Poruka(string s, User u)
+		public Poruka(string s, User u, string g)
 		{
 			Sadrzaj = s;
-			Posiljaoc = u; 
+			Posiljaoc = u;
+			Grupa = g;
 		}
 
 		public Poruka() { }

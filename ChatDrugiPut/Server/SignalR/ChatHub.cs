@@ -9,13 +9,18 @@ namespace ChatDrugiPut.Server.SignalR
 {
 	public class ChatHub : Hub
 	{
+		public async Task Join(Poruka por)
+		{
+			await Groups.AddToGroupAsync(Context.ConnectionId, por.Sadrzaj);
+			Clients.Group(por.Sadrzaj).SendAsync("PorukaKaKlijentu", new Poruka($"Korisnik {por.Posiljaoc.Username} se prikljucuje grupi :).", null, por.Sadrzaj));
+		}
 
 		public async Task PrimiPoruku(Poruka por)
 		{
-			Console.WriteLine("U metodi :) ");
-			Console.WriteLine($"{por.Posiljaoc.Username}: {por.Sadrzaj}");
-			await Clients.Caller.SendAsync("PorukaKaKlijentu", por);
-			await Clients.Others.SendAsync("PorukaKaKlijentu", por);
+			if (por.Grupa == null)
+				Clients.All.SendAsync("PorukaKaKlijentu", por);
+			else
+				Clients.Group(por.Grupa).SendAsync("PorukaKaKlijentu", por);
 		}
 
 		public async Task PrihvatiKorisnika (User u)

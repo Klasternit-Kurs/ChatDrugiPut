@@ -1,6 +1,8 @@
 ﻿@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
-.flex-container {
+
+.fleks {
     display: flex;
+    flex-direction: row;
 }
 
 html, body {

@@ -1,26 +1,45 @@
 ﻿@using ChatDrugiPut.Shared
 @using Microsoft.AspNetCore.SignalR.Client
 
-<h3>ChatProzor</h3>
-<p>Ulogovan korisnik: @UlogovanKorisnik.Username</p>
+	<div class="fleks">
+		<div>1</div>
+		<div>2</div>
+		<div>3</div>
+	</div>
+	<div class="fleks">
+		<div>
+			<p>Ovde ce da budu grupe</p>
+		</div>
+		<div>
+			<h3>ChatProzor</h3>
+			<p>Ulogovan korisnik: @UlogovanKorisnik.Username</p>
 
-<p><input @bind-value="Tekst" /> <button @onclick="Posalji">Posalji</button></p>
+			<p><input @bind-value="Tekst" /> <button @onclick="Posalji">Posalji</button></p>
 
 
-@foreach (Poruka poruka in Istorija)
-{
-	<p>Ovde su kao poruke</p>
-	@if (poruka.Posiljaoc.Equals(UlogovanKorisnik))
-	{
-		<p>Ja: @poruka.Sadrzaj</p>
-	} else
-	{
-		<p>@poruka.Posiljaoc.Username: @poruka.Sadrzaj</p>
-	}
-}
+			@foreach (Poruka poruka in Istorija)
+			{ 
+				if (poruka.Grupa == null)
+					PorukaGrupa = "<global>";
+				else
+					PorukaGrupa = $"<{poruka.Grupa}>";
 
+				@if (poruka.Posiljaoc == null)
+				{
+					<p><b>SERVER</b><i>@PorukaGrupa</i>: @poruka.Sadrzaj</p>
+				} else if (poruka.Posiljaoc.Equals(UlogovanKorisnik))
+				{
+					<p>Ja<i>@PorukaGrupa</i>: @poruka.Sadrzaj</p>
+				} else
+				{
+					<p>@poruka.Posiljaoc.Username<i>@PorukaGrupa</i>: @poruka.Sadrzaj</p>
+				}
+			}
+		</div>
+	</div>
 @code 
 {
+	public string PorukaGrupa { get; set; }
 	[Parameter]
 	public User UlogovanKorisnik { get; set; }
 
@@ -43,9 +62,24 @@
 
 	public async Task Posalji()
 	{
-		Poruka p = new Poruka(Tekst, UlogovanKorisnik);
-		await cHub.SendAsync("PrimiPoruku", p);
+		Poruka p = new Poruka(Tekst, UlogovanKorisnik, null);
 		Tekst = "";
+		if (p.Sadrzaj.StartsWith("/"))
+		{
+			if (p.Sadrzaj.Split(' ')[0] == "/join")
+			{
+				p.Sadrzaj = p.Sadrzaj.Split(' ')[1];
+				await cHub.SendAsync("Join", p);
+			} else
+			{
+				p.Grupa = p.Sadrzaj.Split(' ')[0].Remove(0, 1);
+				p.Sadrzaj = p.Sadrzaj.Split(' ')[1];
+				await cHub.SendAsync("PrimiPoruku", p);
+			}
+
+			return;
+		}
+		await cHub.SendAsync("PrimiPoruku", p);
 	}
 
 }
