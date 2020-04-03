@@ -20,5 +20,10 @@ namespace ChatDrugiPut.Shared
 			GruId = g.ID;
 		}
 		public UserGrupa() { }
+
+		public override string ToString()
+		{
+			return $"{GruId} - {Gru.Naziv} -----  {KorId} - {Kor.Username}";
+		}
 	}
 }

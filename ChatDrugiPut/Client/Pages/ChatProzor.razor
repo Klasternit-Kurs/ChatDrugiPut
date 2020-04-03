@@ -4,10 +4,7 @@
 	<div class="fleks">
 		<div>
 			<ul>
-				@if(UlogovanKorisnik.AktivneGrupe == null)
-				{
-					<li>NUUUUUUULLLLL</li>
-				}
+				@Grupe.Count
 			</ul>
 		</div>
 		<div>
@@ -49,6 +46,7 @@
 	public string Tekst { get; set; }
 
 	List<Poruka> Istorija = new List<Poruka>();
+	List<Grupa> Grupe = new List<Grupa>();
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -58,7 +56,18 @@
 			StateHasChanged();
 		});
 
+		cHub.On<List<Grupa>>("EvoGrupe", g =>
+		{
+			Grupe = g;
+			StateHasChanged();
+		});
+
+		await cHub.SendAsync("DobaviGrupe", UlogovanKorisnik);
+
 	}
+
+
+
 
 	public async Task Posalji()
 	{
@@ -70,6 +79,10 @@
 			{
 				p.Sadrzaj = p.Sadrzaj.Split(' ')[1];
 				await cHub.SendAsync("Join", p);
+			} else if (p.Sadrzaj.Split(' ')[0] == "/leave")
+			{
+				p.Sadrzaj = p.Sadrzaj.Split(' ')[1];
+				await cHub.SendAsync("Leave", p);
 			} else
 			{
 				p.Grupa = p.Sadrzaj.Split(' ')[0].Remove(0, 1);

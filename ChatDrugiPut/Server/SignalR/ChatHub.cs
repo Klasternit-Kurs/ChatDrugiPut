@@ -29,6 +29,24 @@ namespace ChatDrugiPut.Server.SignalR
 
 			await Groups.AddToGroupAsync(Context.ConnectionId, por.Sadrzaj);
 			Clients.Group(por.Sadrzaj).SendAsync("PorukaKaKlijentu", new Poruka($"Korisnik {por.Posiljaoc.Username} se prikljucuje grupi :).", null, por.Sadrzaj));
+
+
+			await DobaviGrupe(kor);
+		}
+
+		public async Task Leave(Poruka p)
+		{
+			EF.Baza DB = new EF.Baza();
+			DB.UG.Where(ug => ug.Gru.Naziv == p.Sadrzaj).ToList();
+			var k = DB.Users.Where(u => u.Equals(p.Posiljaoc)).First();
+			var g = DB.Grupas.Where(g => g.Naziv == p.Sadrzaj).First();
+			var ug = DB.UG.Where(ug => ug.Gru.Naziv == p.Sadrzaj && ug.Kor.Username == p.Posiljaoc.Username).First();
+			g.Korisnici.Remove(ug);
+			k.AktivneGrupe.Remove(ug);
+			if (g.Korisnici.Count == 0)
+				DB.Grupas.Remove(g);
+			await DB.SaveChangesAsync();
+			await DobaviGrupe(p.Posiljaoc);
 		}
 
 		public async Task PrimiPoruku(Poruka por)
@@ -51,11 +69,25 @@ namespace ChatDrugiPut.Server.SignalR
 			EF.Baza DB = new EF.Baza();
 			
 			var juzer = DB.Users.Where(us => us.Equals(LogIn)).FirstOrDefault();
-			//DB.Grupas.Where(g => g.Korisnici.Where(DB.UG.Where(ug => ug.Kor == juzer).ToList());
-			Console.WriteLine(juzer.AktivneGrupe);
+			
 			if (juzer != null)
 				await Clients.Caller.SendAsync("EvoDobrog", juzer);
 
+		}
+
+		public async Task DobaviGrupe (User kor)
+		{
+			Console.WriteLine("Ulazak u metodu");
+			EF.Baza DB = new EF.Baza();
+			List<Grupa> grupe = new List<Grupa>();
+			DB.Users.Where(p => p.Equals(kor))
+					.SelectMany(p => p.AktivneGrupe)
+					.Select(pc => pc.Gru).ToList().ForEach(g => grupe.Add(g));
+			
+			foreach(Grupa gr in grupe)
+				Console.WriteLine(gr.Naziv);
+
+			await Clients.Caller.SendAsync("EvoGrupe", grupe);
 		}
 	}
 }
