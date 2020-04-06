@@ -1,7 +1,29 @@
 ﻿@page "/"
 
-<h1>Hello, world!</h1>
+	<EditForm Model="Test" OnSubmit="HandleValidSubmit">
+		@for (int br = 0; br <= 8; br++)
+		{
+			<p>
+				<RadioDugme name="dugmici" SelectedValue="i" Vrednost="br" @bind-Value="Test.Broj" />
+				@br
+			</p>
+		}
+		<button type="submit">Posalji</button>
+	</EditForm>
+@Test.Broj
 
-Welcome to your new app.
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+@code
+{
+	public Bla Test { get; set; } = new Bla();
+
+	public void HandleValidSubmit()
+	{
+		StateHasChanged();
+	}
+
+	public class Bla
+	{
+		public int Broj { get; set; }
+	}
+}

@@ -4,7 +4,12 @@
 	<div class="fleks">
 		<div>
 			<ul>
-				@Grupe.Count
+				@foreach (Grupa g in Grupe.Keys)
+				{
+					<li>
+						@g.Naziv -- @Grupe[g]
+					</li>
+				}
 			</ul>
 		</div>
 		<div>
@@ -46,7 +51,7 @@
 	public string Tekst { get; set; }
 
 	List<Poruka> Istorija = new List<Poruka>();
-	List<Grupa> Grupe = new List<Grupa>();
+	Dictionary<Grupa, int> Grupe = new Dictionary<Grupa, int>();
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -56,9 +61,17 @@
 			StateHasChanged();
 		});
 
-		cHub.On<List<Grupa>>("EvoGrupe", g =>
+		cHub.On<List<Grupa>, List<int>>("EvoGrupe", (g, k) =>
 		{
-			Grupe = g;
+			Grupe.Clear();
+			for (int indeks = 0; indeks < g.Count; indeks++)
+				Grupe.Add(g[indeks], k[indeks]);
+			StateHasChanged();
+		});
+
+		cHub.On<Grupa, int>("OsveziGrupu", (g, k) =>
+		{
+			Grupe[g] = k;
 			StateHasChanged();
 		});
 

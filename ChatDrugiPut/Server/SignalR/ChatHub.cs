@@ -16,9 +16,9 @@ namespace ChatDrugiPut.Server.SignalR
 			var gru = DB.Grupas.Where(g => g.Naziv == por.Sadrzaj).FirstOrDefault();
 			if (gru == null)
 			{
-				Grupa g = new Grupa(por.Sadrzaj);
-				DB.Grupas.Add(g);
-				DB.UG.Add(new UserGrupa(kor, g));
+				gru = new Grupa(por.Sadrzaj);
+				DB.Grupas.Add(gru);
+				DB.UG.Add(new UserGrupa(kor, gru));
 				await DB.SaveChangesAsync();
 			}
 			else
@@ -27,11 +27,11 @@ namespace ChatDrugiPut.Server.SignalR
 				await DB.SaveChangesAsync();
 			}
 
-			await Groups.AddToGroupAsync(Context.ConnectionId, por.Sadrzaj);
-			Clients.Group(por.Sadrzaj).SendAsync("PorukaKaKlijentu", new Poruka($"Korisnik {por.Posiljaoc.Username} se prikljucuje grupi :).", null, por.Sadrzaj));
-
 
 			await DobaviGrupe(kor);
+			Clients.Group(por.Sadrzaj).SendAsync("PorukaKaKlijentu", new Poruka($"Korisnik {por.Posiljaoc.Username} se prikljucuje grupi :).", null, por.Sadrzaj));
+			Console.WriteLine(DB.UG.Where(ug => ug.Gru.Equals(gru)).Count());
+			await Clients.Group(por.Sadrzaj).SendAsync("OsveziGrupu", gru, DB.UG.Where(ug => ug.Gru.Equals(gru)).Count());
 		}
 
 		public async Task Leave(Poruka p)
@@ -77,17 +77,20 @@ namespace ChatDrugiPut.Server.SignalR
 
 		public async Task DobaviGrupe (User kor)
 		{
-			Console.WriteLine("Ulazak u metodu");
 			EF.Baza DB = new EF.Baza();
 			List<Grupa> grupe = new List<Grupa>();
 			DB.Users.Where(p => p.Equals(kor))
 					.SelectMany(p => p.AktivneGrupe)
 					.Select(pc => pc.Gru).ToList().ForEach(g => grupe.Add(g));
-			
-			foreach(Grupa gr in grupe)
-				Console.WriteLine(gr.Naziv);
 
-			await Clients.Caller.SendAsync("EvoGrupe", grupe);
+			List<int> Korisnici = new List<int>();
+			foreach (Grupa gr in grupe)
+			{
+				await Groups.AddToGroupAsync(Context.ConnectionId, gr.Naziv);
+				Korisnici.Add(DB.UG.Where(ug => ug.Gru.Equals(gr)).Count());
+			}
+
+			await Clients.Caller.SendAsync("EvoGrupe", grupe, Korisnici);
 		}
 	}
 }

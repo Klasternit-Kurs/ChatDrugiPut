@@ -1,0 +1,34 @@
+﻿@typeparam TValue
+@inherits InputBase<TValue>
+@using System.Globalization
+
+
+
+<input checked="@(Vrednost.Equals(Value))" @attributes="AdditionalAttributes" type="radio" value="@Vrednost" @onchange="Promena"/>
+
+@code 
+{
+	[Parameter]
+	public  TValue Vrednost {get;set;}
+
+	private void Promena(ChangeEventArgs e)
+	{
+		CurrentValueAsString = e.Value.ToString();
+	}
+
+	protected override bool TryParseValueFromString(string vrednost, out TValue izlaz, out string err)
+	{
+		if (BindConverter.TryConvertTo<TValue>(vrednost, CultureInfo.CurrentCulture, out var parsan))
+		{
+			izlaz = parsan;
+			err = null;
+			return true;
+		} else
+		{
+			izlaz = default;
+			err = "Greska:/";
+			return false;
+		}
+	}
+
+}
