@@ -25,7 +25,7 @@ namespace ChatDrugiPut.Server.EF
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
-			optionsBuilder.UseSqlServer("Server=tcp:blazortest.database.windows.net,1433;Initial Catalog=ChatApp;Persist Security Info=False;User ID=blazor;Password=#12!sifra!21#;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+			optionsBuilder.UseSqlServer("Data Source=DESKTOP-75VO5EN;Initial Catalog = ChatBaza;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False");
 		}
 	}
 }

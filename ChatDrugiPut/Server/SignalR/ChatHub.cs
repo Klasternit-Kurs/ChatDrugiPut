@@ -1,5 +1,6 @@
 ﻿using ChatDrugiPut.Shared;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,34 +20,48 @@ namespace ChatDrugiPut.Server.SignalR
 				gru = new Grupa(por.Sadrzaj);
 				DB.Grupas.Add(gru);
 				DB.UG.Add(new UserGrupa(kor, gru));
-				await DB.SaveChangesAsync();
 			}
 			else
 			{
 				DB.UG.Add(new UserGrupa(kor, gru));
-				await DB.SaveChangesAsync();
 			}
+			try
+			{
+				await DB.SaveChangesAsync();
+				await Groups.AddToGroupAsync(Context.ConnectionId, por.Sadrzaj);
+				await Clients.Group(por.Sadrzaj).SendAsync("PorukaKaKlijentu", new Poruka($"Korisnik {por.Posiljaoc.Username} se prikljucuje grupi :).", null, por.Sadrzaj));
+				await Clients.Group(por.Sadrzaj).SendAsync("OsveziGrupu", gru.Naziv, DB.UG.Where(ug => ug.Gru.Naziv == gru.Naziv).Count());
+			}
+			catch { }
 
-
-			await DobaviGrupe(kor);
-			Clients.Group(por.Sadrzaj).SendAsync("PorukaKaKlijentu", new Poruka($"Korisnik {por.Posiljaoc.Username} se prikljucuje grupi :).", null, por.Sadrzaj));
-			Console.WriteLine(DB.UG.Where(ug => ug.Gru.Equals(gru)).Count());
-			await Clients.Group(por.Sadrzaj).SendAsync("OsveziGrupu", gru, DB.UG.Where(ug => ug.Gru.Equals(gru)).Count());
+			
+			
 		}
 
 		public async Task Leave(Poruka p)
 		{
-			EF.Baza DB = new EF.Baza();
-			DB.UG.Where(ug => ug.Gru.Naziv == p.Sadrzaj).ToList();
-			var k = DB.Users.Where(u => u.Equals(p.Posiljaoc)).First();
-			var g = DB.Grupas.Where(g => g.Naziv == p.Sadrzaj).First();
-			var ug = DB.UG.Where(ug => ug.Gru.Naziv == p.Sadrzaj && ug.Kor.Username == p.Posiljaoc.Username).First();
-			g.Korisnici.Remove(ug);
-			k.AktivneGrupe.Remove(ug);
-			if (g.Korisnici.Count == 0)
-				DB.Grupas.Remove(g);
-			await DB.SaveChangesAsync();
-			await DobaviGrupe(p.Posiljaoc);
+			try
+			{
+				EF.Baza DB = new EF.Baza();
+				DB.UG.Where(ug => ug.Gru.Naziv == p.Sadrzaj).ToList();
+				var k = DB.Users.Where(u => u.Equals(p.Posiljaoc)).First();
+				var g = DB.Grupas.Where(g => g.Naziv == p.Sadrzaj).First();
+				var ug = DB.UG.Where(ug => ug.Gru.Naziv == p.Sadrzaj && ug.Kor.Username == p.Posiljaoc.Username).First();
+				g.Korisnici.Remove(ug);
+				k.AktivneGrupe.Remove(ug);
+				if (g.Korisnici.Count == 0)
+					DB.Grupas.Remove(g);
+			
+				await DB.SaveChangesAsync();
+				await DobaviGrupe(p.Posiljaoc);
+				await Groups.RemoveFromGroupAsync(Context.ConnectionId, g.Naziv);
+				await Clients.Group(g.Naziv).SendAsync("PorukaKaKlijentu", new Poruka($"Korisnik {k.Username} napusta grupu :).", null, g.Naziv));
+				await Clients.Group(g.Naziv).SendAsync("OsveziGrupu", g.Naziv, DB.UG.Where(ug => ug.Gru.Naziv == g.Naziv).Count());
+			}
+			catch ( SqlException e )
+			{
+				Console.WriteLine("Greska sa bazom! -- " + e.ToString());
+			}
 		}
 
 		public async Task PrimiPoruku(Poruka por)
@@ -54,7 +69,11 @@ namespace ChatDrugiPut.Server.SignalR
 			if (por.Grupa == null)
 				Clients.All.SendAsync("PorukaKaKlijentu", por);
 			else
-				Clients.Group(por.Grupa).SendAsync("PorukaKaKlijentu", por);
+			{
+				EF.Baza DB = new EF.Baza();
+				if (DB.UG.Where(ug => ug.Gru.Naziv == por.Grupa && ug.Kor.Equals(por.Posiljaoc)).Count() != 0)
+					Clients.Group(por.Grupa).SendAsync("PorukaKaKlijentu", por);
+			}
 		}
 
 		public async Task PrihvatiKorisnika (User u)
@@ -78,16 +97,16 @@ namespace ChatDrugiPut.Server.SignalR
 		public async Task DobaviGrupe (User kor)
 		{
 			EF.Baza DB = new EF.Baza();
-			List<Grupa> grupe = new List<Grupa>();
+			List<string> grupe = new List<string>();
 			DB.Users.Where(p => p.Equals(kor))
 					.SelectMany(p => p.AktivneGrupe)
-					.Select(pc => pc.Gru).ToList().ForEach(g => grupe.Add(g));
+					.Select(pc => pc.Gru).ToList().ForEach(g => grupe.Add(g.Naziv));
 
 			List<int> Korisnici = new List<int>();
-			foreach (Grupa gr in grupe)
+			foreach (string gr in grupe)
 			{
-				await Groups.AddToGroupAsync(Context.ConnectionId, gr.Naziv);
-				Korisnici.Add(DB.UG.Where(ug => ug.Gru.Equals(gr)).Count());
+				await Groups.AddToGroupAsync(Context.ConnectionId, gr);
+				Korisnici.Add(DB.UG.Where(ug => ug.Gru.Naziv == gr).Count());
 			}
 
 			await Clients.Caller.SendAsync("EvoGrupe", grupe, Korisnici);

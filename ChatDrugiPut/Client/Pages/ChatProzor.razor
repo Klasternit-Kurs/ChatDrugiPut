@@ -4,10 +4,11 @@
 	<div class="fleks">
 		<div>
 			<ul>
-				@foreach (Grupa g in Grupe.Keys)
+				@asd
+				@foreach (string g in Grupe.Keys)
 				{
 					<li>
-						@g.Naziv -- @Grupe[g]
+						@g -- @Grupe[g]
 					</li>
 				}
 			</ul>
@@ -51,7 +52,10 @@
 	public string Tekst { get; set; }
 
 	List<Poruka> Istorija = new List<Poruka>();
-	Dictionary<Grupa, int> Grupe = new Dictionary<Grupa, int>();
+	Dictionary<string, int> Grupe = new Dictionary<string, int>();
+
+
+	private string asd { get; set; }
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -61,17 +65,26 @@
 			StateHasChanged();
 		});
 
-		cHub.On<List<Grupa>, List<int>>("EvoGrupe", (g, k) =>
+		cHub.On<List<string>, List<int>>("EvoGrupe", (g, k) =>
 		{
 			Grupe.Clear();
-			for (int indeks = 0; indeks < g.Count; indeks++)
-				Grupe.Add(g[indeks], k[indeks]);
+			for (int i = 0; i < g.Count; i++)
+			{
+				Grupe.Add(g[i], k[i]);
+			}
 			StateHasChanged();
 		});
 
-		cHub.On<Grupa, int>("OsveziGrupu", (g, k) =>
+		cHub.On<string, int>("OsveziGrupu", (g, k) =>
 		{
-			Grupe[g] = k;
+			if (Grupe.ContainsKey(g))
+			{
+				Grupe[g] = k;
+			} else
+			{
+				Grupe.Add(g, k);
+			}
+
 			StateHasChanged();
 		});
 
