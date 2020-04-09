@@ -3,45 +3,57 @@
 
 	<div class="fleks">
 		<div>
-			<ul>
-				@asd
-				@foreach (string g in Grupe.Keys)
+			<EditForm Model="SG">
+
+				@foreach (string s in Grupe.Keys)
 				{
-					<li>
-						@g -- @Grupe[g]
-					</li>
+					<p>
+						<RadioDugme Vrednost="s" @bind-Value="SG.selGrupa" />
+						@s -- @Grupe[s]
+					</p>
 				}
-			</ul>
+				@SG.selGrupa
+			</EditForm>
+			
 		</div>
 		<div>
 			<h3>ChatProzor</h3>
 			<p>Ulogovan korisnik: @UlogovanKorisnik.Username</p>
-
-			<p><input @bind-value="Tekst" /> <button @onclick="Posalji">Posalji</button></p>
-
-
-			@foreach (Poruka poruka in Istorija)
-			{ 
-				if (poruka.Grupa == null)
-					PorukaGrupa = "<global>";
-				else
-					PorukaGrupa = $"<{poruka.Grupa}>";
-
-				@if (poruka.Posiljaoc == null)
+			<div style="overflow-y: scroll;  max-height:200px">
+				@foreach (Poruka poruka in Istorija)
 				{
-					<p><b>SERVER</b><i>@PorukaGrupa</i>: @poruka.Sadrzaj</p>
-				} else if (poruka.Posiljaoc.Equals(UlogovanKorisnik))
-				{
-					<p>Ja<i>@PorukaGrupa</i>: @poruka.Sadrzaj</p>
-				} else
-				{
-					<p>@poruka.Posiljaoc.Username<i>@PorukaGrupa</i>: @poruka.Sadrzaj</p>
+					if (poruka.Grupa == null)
+						PorukaGrupa = "<global>";
+					else
+						PorukaGrupa = $"<{poruka.Grupa}>";
+
+					@if (poruka.Posiljaoc == null)
+					{
+						<p><b>SERVER</b><i>@PorukaGrupa</i>: @poruka.Sadrzaj</p>
+					}
+					else if (poruka.Posiljaoc.Equals(UlogovanKorisnik))
+					{
+						<p>Ja<i>@PorukaGrupa</i>: @poruka.Sadrzaj</p>
+					}
+					else
+					{
+						<p>@poruka.Posiljaoc.Username<i>@PorukaGrupa</i>: @poruka.Sadrzaj</p>
+					}
 				}
-			}
+			</div>
+			<p><input @bind-value="Tekst" /> <button @onclick="Posalji">Posalji</button></p>
 		</div>
-	</div>
+		</div>
 @code 
 {
+	public SelektorGrupa SG { get; set; } = new SelektorGrupa();
+	public class SelektorGrupa
+	{
+		public string selGrupa { get; set; }
+	}
+
+
+
 	public string PorukaGrupa { get; set; }
 	[Parameter]
 	public User UlogovanKorisnik { get; set; }
@@ -51,11 +63,10 @@
 
 	public string Tekst { get; set; }
 
+
 	List<Poruka> Istorija = new List<Poruka>();
 	Dictionary<string, int> Grupe = new Dictionary<string, int>();
 
-
-	private string asd { get; set; }
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -68,6 +79,8 @@
 		cHub.On<List<string>, List<int>>("EvoGrupe", (g, k) =>
 		{
 			Grupe.Clear();
+			Grupe.Add("Globalno", 0);
+			SG.selGrupa = "Globalno";
 			for (int i = 0; i < g.Count; i++)
 			{
 				Grupe.Add(g[i], k[i]);
@@ -92,9 +105,6 @@
 
 	}
 
-
-
-
 	public async Task Posalji()
 	{
 		Poruka p = new Poruka(Tekst, UlogovanKorisnik, null);
@@ -109,15 +119,12 @@
 			{
 				p.Sadrzaj = p.Sadrzaj.Split(' ')[1];
 				await cHub.SendAsync("Leave", p);
-			} else
-			{
-				p.Grupa = p.Sadrzaj.Split(' ')[0].Remove(0, 1);
-				p.Sadrzaj = p.Sadrzaj.Remove(0,p.Sadrzaj.Split(' ')[0].Length + 1);
-				await cHub.SendAsync("PrimiPoruku", p);
-			}
-
+			} 
 			return;
 		}
+
+		if (SG.selGrupa != "Globalno")
+			p.Grupa = SG.selGrupa;
 		await cHub.SendAsync("PrimiPoruku", p);
 	}
 
